@@ -1,37 +1,78 @@
-Ground-Based Telemetry Communication System
+# Ground-Based Telemetry Communication using PCM and QPSK
 
-This project simulates a ground-based telemetry communication system using Pulse Code Modulation (PCM) and Quadrature Phase Shift Keying (QPSK). Developed as an academic project, the system demonstrates how digital modulation techniques can improve data integrity and noise resistance in terrestrial communication links.
+A Scilab simulation of a sensor telemetry link: temperature readings are digitised with 8-bit PCM, sent as raw bits or as Gray-coded QPSK over a noisy channel, and recovered at the receiver.
 
-The repository contains the Scilab code and a detailed project report outlining the methodology, system architecture, and performance analysis.
-Features
+| | |
+|---|---|
+| Stack | Scilab |
+| Type | Course simulation, 2024 to 2025 |
+| Course | 21ECC302T, SRM Institute of Science and Technology |
+| Status | Both scripts run and produce plots and bit error rate |
+| Hardware | None, simulation only |
 
-    PCM Encoding & Decoding: Simulates the digitization of analog sensor data for transmission.
+## Why it exists
 
-    QPSK Modulation: Implements QPSK with Gray coding to enhance spectral efficiency and noise immunity.
+A ground sensor has to send readings over a noisy radio link. Bit errors in a PCM stream corrupt the recovered value. This simulation shows how much a QPSK link with decisions per symbol reduces those errors compared with sending raw bits through the same kind of noise.
 
-    AWGN Channel Simulation: Models a realistic noisy communication environment using Additive White Gaussian Noise.
+## How it works
 
-    Performance Evaluation: Calculates and compares the Bit Error Rate (BER) and Mean Squared Error (MSE) for both PCM-only and PCM+QPSK systems.
+```mermaid
+flowchart LR
+    S[1000 temperature samples, 0 to 100 C] --> Q[8-bit PCM]
+    Q --> M[Raw bits, or Gray-coded QPSK]
+    M --> N[Add Gaussian noise, SNR 6 dB]
+    N --> D[Decide bits]
+    D --> R[Decode to temperature]
+    R --> E[BER and mean squared error]
+```
 
-Project Overview
+* `PCM.sci`: PCM bits are sent directly as 0 and 1 levels, noise is added, and each bit is decided by rounding.
+* `PCM+QPSK.sci`: the same bits are mapped in pairs to QPSK symbols with Gray coding (00, 01, 11, 10 map to the four corners), noise is added to both parts of each symbol, and each symbol is decided by its quadrant.
 
-The core of this project is a comparative study between a baseline PCM system and an enhanced system that incorporates QPSK modulation. Through simulation, the project proves that adding QPSK significantly reduces the BER and MSE, resulting in more reliable data transmission in noisy conditions.
-Technologies Used
+Both scripts use a fixed SNR of 6 dB, 1000 samples and 8 bits per sample.
 
-    Scilab: All simulations and data analysis were conducted using Scilab, an open-source numerical computation package.
+## Results
 
-Getting Started
+At SNR 6 dB, as recorded in the project report (one run of each script):
 
-To run the simulations, you will need to have Scilab installed.
+| Scheme | Bit error rate | Mean squared error |
+|---|---|---|
+| PCM alone, bits as 0 and 1 levels | 0.155625 | 239.24 |
+| PCM with Gray-coded QPSK | 0.00225 | 5.97 |
 
-    Clone this repository:
+Results change from run to run because the noise is random. The Scilab scripts print the figures for each run.
 
-    git clone [https://github.com/VidipNegi/Ground-Based-Telemetry-Communication-using-PCM-QPSK.git](https://github.com/VidipNegi/Ground-Based-Telemetry-Communication-using-PCM-QPSK.git)
+A re-run check: I reimplemented the same two models in Python and averaged 200 runs. QPSK came out at about 0.002, in line with the report. PCM alone came out at about 0.08, roughly half the report's single-run figure. So the direction and the large gap between the two schemes hold, but the exact PCM figure depends on the run and I could not reproduce 0.156 as a typical value.
 
-    Open the .sce files in Scilab and execute them to run the simulations.
+![Noisy QPSK symbols around the four ideal points](assets/qpsk_noisy_constellation.png)
 
-Project Report
+PCM alone, original and recovered signal. The recovered line scatters where bit errors corrupt a value.
 
-For a full breakdown of the project's objectives, methodology, and results, please refer to the ADC-GROUND-BASED_TELEMETRY_COMM_SYSTEM_REPORT.pdf included in this repository.
+![PCM alone: original and recovered temperature signal overlaid](assets/pcm_original_vs_recovered.png)
 
-This project was developed for the 21ECC302T Analog and Digital Communication course at SRM Institute of Science and Technology.
+PCM with QPSK, same comparison. The recovered line follows the original closely.
+
+![PCM with QPSK: original and recovered temperature signal overlaid](assets/qpsk_original_vs_recovered.png)
+
+The other output plots are in `PCM Output.7z` and `QPSK + PCM Output.7z`.
+
+## Run it
+
+1. Install [Scilab](https://www.scilab.org/).
+2. Open `PCM.sci` or `PCM+QPSK.sci` in the Scilab editor and run it.
+3. Read the bit error rate and mean squared error from the console, and the plots from the graphics windows.
+
+## Limits and next steps
+
+* A single SNR point, not a sweep. This is not a bit error rate against Eb/N0 curve.
+* The two scripts scale their signals differently (0 and 1 levels for PCM, plus and minus 1 for QPSK), so the comparison shows the two simulations as written, not a controlled test at equal energy per bit.
+* Hard decisions only, with no channel coding.
+* Next: sweep SNR, plot the curves, and compare against the theoretical QPSK bit error rate.
+
+## Credits
+
+Team course project for 21ECC302T Analog and Digital Communication, SRM Institute of Science and Technology, 2024 to 2025.
+
+## Licence
+
+Not yet chosen.
